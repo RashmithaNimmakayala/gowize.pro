@@ -5,6 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
 import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
 import { cn } from '@/lib/utils'
@@ -17,6 +26,8 @@ export function SignupPage() {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [issues, setIssues] = useState<string[]>([])
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const mismatch = confirm.length > 0 && password !== confirm
 
@@ -31,14 +42,16 @@ export function SignupPage() {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (submitting) return
-    if (!passwordValid) {
-      toast.show('Password does not meet the requirements')
+
+    // Collect everything wrong so the dialog can explain it all at once.
+    const found = pwChecks.filter((c) => !c.ok).map((c) => `Password needs ${c.label.toLowerCase()}`)
+    if (password !== confirm) found.push('Password and confirmation must match')
+    if (found.length > 0) {
+      setIssues(found)
+      setDialogOpen(true)
       return
     }
-    if (password !== confirm) {
-      toast.show('Passwords do not match')
-      return
-    }
+
     setSubmitting(true)
     // UI-only for now — real account creation is wired up later.
     window.setTimeout(() => {
@@ -162,12 +175,7 @@ export function SignupPage() {
                 )}
               </div>
 
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full"
-                disabled={submitting || mismatch || !passwordValid}
-              >
+              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Create account'}
               </Button>
             </form>
@@ -181,6 +189,30 @@ export function SignupPage() {
           </Link>
         </p>
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Password requirements not met</DialogTitle>
+            <DialogDescription>
+              Please fix the following before creating your account:
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2">
+            {issues.map((i) => (
+              <li key={i} className="flex items-start gap-2 text-sm">
+                <X className="size-4 text-destructive shrink-0 mt-0.5" />
+                <span>{i}</span>
+              </li>
+            ))}
+          </ul>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button>Got it</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
