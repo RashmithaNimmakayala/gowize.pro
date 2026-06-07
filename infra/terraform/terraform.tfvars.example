@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars and edit. terraform.tfvars is gitignored (never committed).
+
+aws_region  = "ap-south-1"
+
+# S3 bucket names are GLOBALLY unique — add a random suffix.
+bucket_name = "remindly-scans-CHANGE-ME-1234"
+
+cors_origins         = ["http://localhost:5173", "http://localhost:5174"]
+scan_expiration_days = 30
