@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-background/80 backdrop-blur border-t z-20">
+    <nav className="md:hidden fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-background/80 backdrop-blur border-t z-20">
       <div className="grid grid-cols-3 h-16 items-center">
         <NavLink
           to="/"

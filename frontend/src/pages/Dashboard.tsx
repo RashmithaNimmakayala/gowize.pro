@@ -31,7 +31,7 @@ export function DashboardPage() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b">
-        <div className="px-4 h-14 flex items-center justify-between">
+        <div className="mx-auto w-full max-w-5xl px-4 h-14 flex items-center justify-between">
           <h1 className="text-lg font-bold">My items</h1>
           {totalActive > 0 && (
             <span className="text-xs text-muted-foreground">{totalActive} tracked</span>
@@ -51,17 +51,17 @@ export function DashboardPage() {
       ) : totalActive === 0 ? (
         <EmptyState />
       ) : (
-        <div className="px-4 pt-4 pb-24">
+        <div className="mx-auto w-full max-w-5xl px-4 pt-4 pb-24 md:pb-10">
           {TIER_ORDER.map((tier) => {
             const items = grouped.get(tier)!
             if (items.length === 0) return null
             return (
-              <section key={tier} className="mb-5">
+              <section key={tier} className="mb-6">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
                   {urgencyLabel(tier)}
                   <span className="text-muted-foreground/60 ml-1.5">· {items.length}</span>
                 </h2>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
                   {items.map((item) => (
                     <ItemCard key={item.id} item={item} />
                   ))}

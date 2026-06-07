@@ -55,7 +55,7 @@ export function ItemDetailPage() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b">
-        <div className="flex items-center gap-2 px-4 h-14">
+        <div className="mx-auto w-full max-w-2xl flex items-center gap-2 px-4 h-14">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="-ml-2">
             <ChevronLeft className="size-6" />
           </Button>
@@ -63,7 +63,7 @@ export function ItemDetailPage() {
         </div>
       </header>
 
-      <div className="pb-32">
+      <div className="mx-auto w-full max-w-2xl pb-6">
         {item.photoUrl && (
           <img src={item.photoUrl} alt={item.name} className="w-full h-48 object-cover" />
         )}
@@ -95,8 +95,8 @@ export function ItemDetailPage() {
         </Card>
       </div>
 
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-background border-t px-4 py-3 z-20">
-        <div className="grid grid-cols-2 gap-2">
+      <div className="sticky bottom-16 md:bottom-0 z-20 border-t bg-background">
+        <div className="mx-auto w-full max-w-2xl px-4 py-3 grid grid-cols-2 gap-2">
           <Button size="lg" onClick={markUsed}>
             <Check className="size-5" /> Mark used
           </Button>

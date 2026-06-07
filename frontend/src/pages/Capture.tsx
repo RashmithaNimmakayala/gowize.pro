@@ -36,7 +36,7 @@ export function CapturePage() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b">
-        <div className="flex items-center gap-2 px-4 h-14">
+        <div className="mx-auto w-full max-w-2xl flex items-center gap-2 px-4 h-14">
           <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="-ml-2">
             <ChevronLeft className="size-6" />
           </Button>
@@ -44,7 +44,7 @@ export function CapturePage() {
         </div>
       </header>
 
-      <div className="px-4 py-6 pb-24">
+      <div className="mx-auto w-full max-w-2xl px-4 py-6 pb-24 md:pb-10">
         <p className="text-sm text-muted-foreground mb-6">
           Take or upload a photo. We'll read the barcode and expiry date for you.
         </p>

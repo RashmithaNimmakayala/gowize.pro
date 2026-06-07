@@ -21,12 +21,12 @@ export function SettingsPage() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b">
-        <div className="px-4 h-14 flex items-center">
+        <div className="mx-auto w-full max-w-2xl px-4 h-14 flex items-center">
           <h1 className="text-lg font-bold">Settings</h1>
         </div>
       </header>
 
-      <div className="px-4 py-4 pb-24 space-y-4">
+      <div className="mx-auto w-full max-w-2xl px-4 py-4 pb-24 md:pb-10 space-y-4">
         <div className="grid grid-cols-3 gap-2">
           <Stat label="Active" value={active} />
           <Stat label="Used" value={used} />

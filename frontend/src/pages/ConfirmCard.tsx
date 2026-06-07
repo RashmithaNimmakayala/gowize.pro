@@ -107,7 +107,7 @@ export function ConfirmCardPage() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b">
-        <div className="flex items-center gap-2 px-4 h-14">
+        <div className="mx-auto w-full max-w-2xl flex items-center gap-2 px-4 h-14">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="-ml-2">
             <ChevronLeft className="size-6" />
           </Button>
@@ -115,7 +115,7 @@ export function ConfirmCardPage() {
         </div>
       </header>
 
-      <div className="pb-32">
+      <div className="mx-auto w-full max-w-2xl pb-6">
         {photoUrl && (
           <div className="px-4 pt-4 relative">
             <img src={photoUrl} alt="Captured" className="w-full h-48 object-cover rounded-xl" />
@@ -304,10 +304,12 @@ export function ConfirmCardPage() {
         </form>
       </div>
 
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-background border-t px-4 py-3 z-20">
-        <Button type="button" size="lg" onClick={save} disabled={saving} className="w-full">
-          {saving ? 'Saving…' : 'Save item'}
-        </Button>
+      <div className="sticky bottom-16 md:bottom-0 z-20 border-t bg-background">
+        <div className="mx-auto w-full max-w-2xl px-4 py-3">
+          <Button type="button" size="lg" onClick={save} disabled={saving} className="w-full">
+            {saving ? 'Saving…' : 'Save item'}
+          </Button>
+        </div>
       </div>
     </>
   )
