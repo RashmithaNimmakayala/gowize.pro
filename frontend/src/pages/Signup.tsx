@@ -8,21 +8,29 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
 
-export function LoginPage() {
+export function SignupPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const mismatch = confirm.length > 0 && password !== confirm
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (submitting) return
+    if (password !== confirm) {
+      toast.show('Passwords do not match')
+      return
+    }
     setSubmitting(true)
-    // UI-only for now — real authentication is wired up later.
+    // UI-only for now — real account creation is wired up later.
     window.setTimeout(() => {
       setSubmitting(false)
-      toast.show('Login is UI-only for now')
+      toast.show('Sign-up is UI-only for now')
       navigate('/')
     }, 500)
   }
@@ -35,13 +43,13 @@ export function LoginPage() {
             <Leaf className="size-7" />
           </div>
           <h1 className="text-2xl font-bold">GoWize</h1>
-          <p className="text-sm text-muted-foreground">Welcome back</p>
+          <p className="text-sm text-muted-foreground">Create your account</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>Enter your details to access your items.</CardDescription>
+            <CardTitle>Sign up</CardTitle>
+            <CardDescription>Start tracking what expires before it does.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button
@@ -49,7 +57,7 @@ export function LoginPage() {
               variant="outline"
               size="lg"
               className="w-full"
-              onClick={() => toast.show('Google sign-in coming soon')}
+              onClick={() => toast.show('Google sign-up coming soon')}
             >
               <GoogleIcon />
               Continue with Google
@@ -66,6 +74,18 @@ export function LoginPage() {
 
             <form className="space-y-4" onSubmit={onSubmit}>
               <div className="space-y-1.5">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  required
+                  placeholder="Jane Doe"
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1.5">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -79,38 +99,47 @@ export function LoginPage() {
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <button
-                    type="button"
-                    className="text-xs text-primary hover:underline"
-                    onClick={() => toast.show('Password reset coming soon')}
-                  >
-                    Forgot?
-                  </button>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   required
-                  placeholder="••••••••"
-                  autoComplete="current-password"
+                  minLength={8}
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
 
-              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-                {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Sign in'}
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm">Confirm password</Label>
+                <Input
+                  id="confirm"
+                  type="password"
+                  required
+                  placeholder="Re-enter your password"
+                  autoComplete="new-password"
+                  aria-invalid={mismatch}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                />
+                {mismatch && (
+                  <p className="text-xs text-destructive">Passwords do not match</p>
+                )}
+              </div>
+
+              <Button type="submit" size="lg" className="w-full" disabled={submitting || mismatch}>
+                {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Create account'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
         <p className="text-center text-sm text-muted-foreground mt-4">
-          Don't have an account?{' '}
-          <Link to="/signup" className="text-primary font-medium hover:underline">
-            Sign up
+          Already have an account?{' '}
+          <Link to="/login" className="text-primary font-medium hover:underline">
+            Sign in
           </Link>
         </p>
       </div>
