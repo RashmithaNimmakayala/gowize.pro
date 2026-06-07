@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Leaf, Loader2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -49,10 +48,14 @@ export function SignupPage() {
   const toast = useToast()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [countryCode, setCountryCode] = useState('+91')
   const [mobile, setMobile] = useState('')
-  const [address, setAddress] = useState('')
-  const [password, setPassword] = useState('')
+  const [addressLine1, setAddressLine1] = useState('')
+  const [addressLine2, setAddressLine2] = useState('')
+  const [stateName, setStateName] = useState('')
+  const [country, setCountry] = useState('')
+  const [zipcode, setZipcode] = useState('')
   const [confirm, setConfirm] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [issues, setIssues] = useState<string[]>([])
@@ -154,46 +157,6 @@ export function SignupPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="mobile">Mobile number</Label>
-                <div className="flex gap-2">
-                  <Select value={countryCode} onValueChange={setCountryCode}>
-                    <SelectTrigger className="w-28 shrink-0" aria-label="Country code">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRY_CODES.map((c) => (
-                        <SelectItem key={c.dial} value={c.dial}>
-                          {c.flag} {c.dial}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    id="mobile"
-                    type="tel"
-                    required
-                    placeholder="98765 43210"
-                    autoComplete="tel"
-                    className="flex-1"
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="address">Address</Label>
-                <Textarea
-                  id="address"
-                  required
-                  placeholder="Street, city, state, ZIP"
-                  autoComplete="street-address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-1.5">
                 <Label htmlFor="password">Password</Label>
                 <PasswordInput
                   id="password"
@@ -240,6 +203,96 @@ export function SignupPage() {
                 {mismatch && (
                   <p className="text-xs text-destructive">Passwords do not match</p>
                 )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="mobile">Mobile number</Label>
+                <div className="flex gap-2">
+                  <Select value={countryCode} onValueChange={setCountryCode}>
+                    <SelectTrigger className="w-28 shrink-0" aria-label="Country code">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNTRY_CODES.map((c) => (
+                        <SelectItem key={c.dial} value={c.dial}>
+                          {c.flag} {c.dial}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="mobile"
+                    type="tel"
+                    required
+                    placeholder="98765 43210"
+                    autoComplete="tel"
+                    className="flex-1"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="addr1">Address line 1</Label>
+                <Input
+                  id="addr1"
+                  required
+                  placeholder="House no., street"
+                  autoComplete="address-line1"
+                  value={addressLine1}
+                  onChange={(e) => setAddressLine1(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="addr2">
+                  Address line 2 <span className="text-muted-foreground font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="addr2"
+                  placeholder="Apartment, landmark"
+                  autoComplete="address-line2"
+                  value={addressLine2}
+                  onChange={(e) => setAddressLine2(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="state">State</Label>
+                  <Input
+                    id="state"
+                    required
+                    placeholder="State"
+                    autoComplete="address-level1"
+                    value={stateName}
+                    onChange={(e) => setStateName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="zip">Zipcode</Label>
+                  <Input
+                    id="zip"
+                    required
+                    placeholder="ZIP / PIN"
+                    autoComplete="postal-code"
+                    value={zipcode}
+                    onChange={(e) => setZipcode(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  required
+                  placeholder="Country"
+                  autoComplete="country-name"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                />
               </div>
 
               <Button type="submit" size="lg" className="w-full" disabled={submitting}>
