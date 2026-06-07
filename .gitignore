@@ -28,3 +28,18 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+.terraform.lock.hcl
+
+# AWS credentials (never commit)
+**/.aws/
+aws-credentials*
+*.pem
