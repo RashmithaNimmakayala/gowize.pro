@@ -22,6 +22,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 import { PasswordInput } from '../components/PasswordInput'
+import { Combobox } from '../components/Combobox'
 import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
 import { COUNTRIES, STATES_BY_COUNTRY } from '../lib/locations'
@@ -264,18 +265,14 @@ export function SignupPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="state">State</Label>
                   {stateOptions.length > 0 ? (
-                    <Select value={stateName} onValueChange={setStateName}>
-                      <SelectTrigger id="state" className="w-full">
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stateOptions.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                      id="state"
+                      options={stateOptions}
+                      value={stateName}
+                      onChange={setStateName}
+                      placeholder="Select state"
+                      searchPlaceholder="Search state…"
+                    />
                   ) : (
                     <Input
                       id="state"
@@ -302,24 +299,17 @@ export function SignupPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="country">Country</Label>
-                <Select
+                <Combobox
+                  id="country"
+                  options={COUNTRIES}
                   value={country}
-                  onValueChange={(v) => {
+                  onChange={(v) => {
                     setCountry(v)
                     setStateName('') // states differ per country
                   }}
-                >
-                  <SelectTrigger id="country" className="w-full">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select country"
+                  searchPlaceholder="Search country…"
+                />
               </div>
 
               <Button type="submit" size="lg" className="w-full" disabled={submitting}>
