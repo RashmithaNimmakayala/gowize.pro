@@ -186,3 +186,46 @@ resource "aws_route53_record" "www_a" {
     evaluate_target_health = false
   }
 }
+
+# --------------------------------------------------------------------------
+# CloudFront for the API — gives the HTTP-only Elastic Beanstalk origin an
+# HTTPS endpoint so the HTTPS frontend can call it (no mixed content).
+# No SPA error handling here; API status codes pass through untouched.
+# --------------------------------------------------------------------------
+resource "aws_cloudfront_distribution" "api" {
+  enabled     = true
+  comment     = "GoWize API"
+  price_class = "PriceClass_100"
+
+  origin {
+    domain_name = var.api_origin_domain
+    origin_id   = "eb-api"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "eb-api"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD"]
+    # AWS managed: CachingDisabled + AllViewerExceptHostHeader (forwards body,
+    # query, and headers incl. Origin to the backend).
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+}

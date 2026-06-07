@@ -21,3 +21,8 @@ output "cloudfront_distribution_id" {
   description = "Use for cache invalidations after each deploy."
   value       = aws_cloudfront_distribution.site.id
 }
+
+output "api_cloudfront_domain" {
+  description = "HTTPS domain for the API (front of Elastic Beanstalk)."
+  value       = aws_cloudfront_distribution.api.domain_name
+}

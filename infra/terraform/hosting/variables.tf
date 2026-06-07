@@ -16,6 +16,12 @@ variable "site_bucket_name" {
   default     = "gowize-site-470999030508"
 }
 
+variable "api_origin_domain" {
+  description = "Elastic Beanstalk environment domain serving the API (HTTP origin)."
+  type        = string
+  default     = "gowize-backend-env.eba-jppnq67q.ap-south-1.elasticbeanstalk.com"
+}
+
 variable "enable_custom_domain" {
   description = "Attach gowize.pro + ACM TLS to CloudFront. Requires NS delegation first; until then deploy on the default *.cloudfront.net cert."
   type        = bool
