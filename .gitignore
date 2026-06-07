@@ -1,0 +1,30 @@
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/.vite
+frontend/dev-dist
+
+# Backend
+backend/target
+backend/.gradle
+backend/build
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+*.env.local
+
+# Logs
+*.log
+
+# Claude Code
+.claude/
