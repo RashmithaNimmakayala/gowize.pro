@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Leaf, Loader2 } from 'lucide-react'
+import { Leaf, Loader2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
+import { cn } from '@/lib/utils'
 
 export function SignupPage() {
   const navigate = useNavigate()
@@ -19,9 +20,21 @@ export function SignupPage() {
 
   const mismatch = confirm.length > 0 && password !== confirm
 
+  const pwChecks = [
+    { label: 'At least 8 characters', ok: password.length >= 8 },
+    { label: 'One uppercase letter', ok: /[A-Z]/.test(password) },
+    { label: 'One number', ok: /[0-9]/.test(password) },
+    { label: 'One special character', ok: /[^A-Za-z0-9]/.test(password) },
+  ]
+  const passwordValid = pwChecks.every((c) => c.ok)
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (submitting) return
+    if (!passwordValid) {
+      toast.show('Password does not meet the requirements')
+      return
+    }
     if (password !== confirm) {
       toast.show('Passwords do not match')
       return
@@ -104,12 +117,32 @@ export function SignupPage() {
                   id="password"
                   type="password"
                   required
-                  minLength={8}
                   placeholder="At least 8 characters"
                   autoComplete="new-password"
+                  aria-invalid={password.length > 0 && !passwordValid}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                {password.length > 0 && (
+                  <ul className="space-y-1 pt-1">
+                    {pwChecks.map((c) => (
+                      <li
+                        key={c.label}
+                        className={cn(
+                          'flex items-center gap-1.5 text-xs',
+                          c.ok ? 'text-emerald-600' : 'text-muted-foreground',
+                        )}
+                      >
+                        {c.ok ? (
+                          <Check className="size-3.5" />
+                        ) : (
+                          <X className="size-3.5 opacity-50" />
+                        )}
+                        {c.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -129,7 +162,12 @@ export function SignupPage() {
                 )}
               </div>
 
-              <Button type="submit" size="lg" className="w-full" disabled={submitting || mismatch}>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={submitting || mismatch || !passwordValid}
+              >
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Create account'}
               </Button>
             </form>
