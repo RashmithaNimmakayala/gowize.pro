@@ -14,6 +14,7 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog'
+import { PasswordInput } from '../components/PasswordInput'
 import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
 import { cn } from '@/lib/utils'
@@ -126,9 +127,8 @@ export function SignupPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="password">Password</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   required
                   placeholder="At least 8 characters"
                   autoComplete="new-password"
@@ -160,9 +160,8 @@ export function SignupPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="confirm">Confirm password</Label>
-                <Input
+                <PasswordInput
                   id="confirm"
-                  type="password"
                   required
                   placeholder="Re-enter your password"
                   autoComplete="new-password"

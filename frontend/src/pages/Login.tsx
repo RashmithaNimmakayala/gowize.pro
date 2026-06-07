@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { PasswordInput } from '../components/PasswordInput'
 import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
 
@@ -89,9 +90,8 @@ export function LoginPage() {
                     Forgot?
                   </button>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   required
                   placeholder="••••••••"
                   autoComplete="current-password"
