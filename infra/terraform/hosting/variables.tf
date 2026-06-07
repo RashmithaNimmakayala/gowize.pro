@@ -15,3 +15,9 @@ variable "site_bucket_name" {
   type        = string
   default     = "gowize-site-470999030508"
 }
+
+variable "enable_custom_domain" {
+  description = "Attach gowize.pro + ACM TLS to CloudFront. Requires NS delegation first; until then deploy on the default *.cloudfront.net cert."
+  type        = bool
+  default     = false
+}

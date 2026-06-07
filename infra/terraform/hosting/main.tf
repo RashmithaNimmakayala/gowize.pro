@@ -1,5 +1,6 @@
 locals {
-  www = "www.${var.domain}"
+  www                = "www.${var.domain}"
+  cloudfront_zone_id = "Z2FDTNDATAQYW2" # fixed, global CloudFront hosted zone
 }
 
 # --------------------------------------------------------------------------
@@ -10,9 +11,10 @@ resource "aws_route53_zone" "primary" {
 }
 
 # --------------------------------------------------------------------------
-# ACM certificate (must be in us-east-1 for CloudFront), DNS-validated
+# ACM certificate (us-east-1, DNS-validated) — only once the domain is enabled
 # --------------------------------------------------------------------------
 resource "aws_acm_certificate" "site" {
+  count                     = var.enable_custom_domain ? 1 : 0
   provider                  = aws.us_east_1
   domain_name               = var.domain
   subject_alternative_names = [local.www]
@@ -24,13 +26,13 @@ resource "aws_acm_certificate" "site" {
 }
 
 resource "aws_route53_record" "cert_validation" {
-  for_each = {
-    for dvo in aws_acm_certificate.site.domain_validation_options : dvo.domain_name => {
+  for_each = var.enable_custom_domain ? {
+    for dvo in aws_acm_certificate.site[0].domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       type   = dvo.resource_record_type
       record = dvo.resource_record_value
     }
-  }
+  } : {}
 
   zone_id         = aws_route53_zone.primary.zone_id
   name            = each.value.name
@@ -41,8 +43,9 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "site" {
+  count                   = var.enable_custom_domain ? 1 : 0
   provider                = aws.us_east_1
-  certificate_arn         = aws_acm_certificate.site.arn
+  certificate_arn         = aws_acm_certificate.site[0].arn
   validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
 }
 
@@ -93,14 +96,14 @@ resource "aws_s3_bucket_policy" "site" {
 }
 
 # --------------------------------------------------------------------------
-# CloudFront distribution (HTTPS, SPA routing, custom domain)
+# CloudFront distribution (HTTPS, SPA routing; custom domain optional)
 # --------------------------------------------------------------------------
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   comment             = "GoWize PWA"
-  aliases             = [var.domain, local.www]
+  aliases             = var.enable_custom_domain ? [var.domain, local.www] : []
   price_class         = "PriceClass_100"
 
   origin {
@@ -111,12 +114,12 @@ resource "aws_cloudfront_distribution" "site" {
 
   default_cache_behavior {
     target_origin_id       = "s3-site"
-    viewer_protocol_policy  = "redirect-to-https"
+    viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     # AWS managed "CachingOptimized" policy
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-    compress               = true
+    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    compress        = true
   }
 
   # SPA fallback: let the client router handle deep links.
@@ -138,20 +141,18 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate_validation.site.certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
+    cloudfront_default_certificate = var.enable_custom_domain ? null : true
+    acm_certificate_arn            = var.enable_custom_domain ? aws_acm_certificate_validation.site[0].certificate_arn : null
+    ssl_support_method             = var.enable_custom_domain ? "sni-only" : null
+    minimum_protocol_version       = var.enable_custom_domain ? "TLSv1.2_2021" : null
   }
 }
 
 # --------------------------------------------------------------------------
-# DNS alias records pointing the domain at CloudFront
+# DNS alias records pointing the domain at CloudFront (only when enabled)
 # --------------------------------------------------------------------------
-locals {
-  cloudfront_zone_id = "Z2FDTNDATAQYW2" # fixed, global CloudFront hosted zone
-}
-
 resource "aws_route53_record" "apex_a" {
+  count   = var.enable_custom_domain ? 1 : 0
   zone_id = aws_route53_zone.primary.zone_id
   name    = var.domain
   type    = "A"
@@ -163,6 +164,7 @@ resource "aws_route53_record" "apex_a" {
 }
 
 resource "aws_route53_record" "apex_aaaa" {
+  count   = var.enable_custom_domain ? 1 : 0
   zone_id = aws_route53_zone.primary.zone_id
   name    = var.domain
   type    = "AAAA"
@@ -174,6 +176,7 @@ resource "aws_route53_record" "apex_aaaa" {
 }
 
 resource "aws_route53_record" "www_a" {
+  count   = var.enable_custom_domain ? 1 : 0
   zone_id = aws_route53_zone.primary.zone_id
   name    = local.www
   type    = "A"
