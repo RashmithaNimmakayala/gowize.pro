@@ -5,6 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Dialog,
@@ -20,11 +27,29 @@ import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
 import { cn } from '@/lib/utils'
 
+const COUNTRY_CODES = [
+  { flag: '🇮🇳', dial: '+91', name: 'India' },
+  { flag: '🇺🇸', dial: '+1', name: 'United States' },
+  { flag: '🇬🇧', dial: '+44', name: 'United Kingdom' },
+  { flag: '🇦🇪', dial: '+971', name: 'UAE' },
+  { flag: '🇦🇺', dial: '+61', name: 'Australia' },
+  { flag: '🇸🇬', dial: '+65', name: 'Singapore' },
+  { flag: '🇩🇪', dial: '+49', name: 'Germany' },
+  { flag: '🇫🇷', dial: '+33', name: 'France' },
+  { flag: '🇯🇵', dial: '+81', name: 'Japan' },
+  { flag: '🇨🇳', dial: '+86', name: 'China' },
+  { flag: '🇧🇷', dial: '+55', name: 'Brazil' },
+  { flag: '🇿🇦', dial: '+27', name: 'South Africa' },
+  { flag: '🇵🇰', dial: '+92', name: 'Pakistan' },
+  { flag: '🇧🇩', dial: '+880', name: 'Bangladesh' },
+]
+
 export function SignupPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [countryCode, setCountryCode] = useState('+91')
   const [mobile, setMobile] = useState('')
   const [address, setAddress] = useState('')
   const [password, setPassword] = useState('')
@@ -130,15 +155,30 @@ export function SignupPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="mobile">Mobile number</Label>
-                <Input
-                  id="mobile"
-                  type="tel"
-                  required
-                  placeholder="+91 98765 43210"
-                  autoComplete="tel"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Select value={countryCode} onValueChange={setCountryCode}>
+                    <SelectTrigger className="w-28 shrink-0" aria-label="Country code">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNTRY_CODES.map((c) => (
+                        <SelectItem key={c.dial} value={c.dial}>
+                          {c.flag} {c.dial}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="mobile"
+                    type="tel"
+                    required
+                    placeholder="98765 43210"
+                    autoComplete="tel"
+                    className="flex-1"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
