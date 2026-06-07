@@ -1,11 +1,11 @@
-# Remindly
+# GoWize
 
 Scan-and-remind PWA for groceries, medicines, and cosmetics.
 
 ## Structure
 
 ```
-remindly/
+gowize.pro/
 ├── frontend/   React 19 + Vite + Tailwind v4 PWA
 └── backend/    Spring Boot + JPA + Postgres + AWS SDK (Textract + S3) — not started yet
 ```

@@ -3,8 +3,8 @@ import type { ReactNode } from 'react'
 import type { Item, ItemStatus } from '../types/item'
 import { mockItems } from './mockData'
 
-const STORAGE_KEY = 'remindly:items'
-const SEEDED_KEY = 'remindly:seeded'
+const STORAGE_KEY = 'gowize:items'
+const SEEDED_KEY = 'gowize:seeded'
 
 interface ItemsContextValue {
   items: Item[]

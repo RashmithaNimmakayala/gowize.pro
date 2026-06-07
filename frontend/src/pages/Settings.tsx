@@ -54,7 +54,7 @@ export function SettingsPage() {
           Reset to demo data
         </Button>
 
-        <p className="text-xs text-muted-foreground text-center pt-2">Remindly · v0.1 (Draft)</p>
+        <p className="text-xs text-muted-foreground text-center pt-2">GoWize · v0.1 (Draft)</p>
       </div>
     </>
   )

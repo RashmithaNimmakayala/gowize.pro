@@ -16,8 +16,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Remindly',
-        short_name: 'Remindly',
+        name: 'GoWize',
+        short_name: 'GoWize',
         description: 'Scan-and-remind for groceries, medicines, and cosmetics',
         theme_color: '#10b981',
         background_color: '#ffffff',
