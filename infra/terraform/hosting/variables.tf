@@ -1,0 +1,17 @@
+variable "aws_region" {
+  description = "Region for the site S3 bucket (CloudFront is global)."
+  type        = string
+  default     = "ap-south-1"
+}
+
+variable "domain" {
+  description = "Apex domain for the app."
+  type        = string
+  default     = "gowize.pro"
+}
+
+variable "site_bucket_name" {
+  description = "Globally-unique S3 bucket holding the built frontend."
+  type        = string
+  default     = "gowize-site-470999030508"
+}
