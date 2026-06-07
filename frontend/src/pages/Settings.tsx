@@ -6,18 +6,16 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 
 export function SettingsPage() {
-  const { items, resetSeed } = useItems()
+  const { items, refresh } = useItems()
   const toast = useToast()
 
   const active = items.filter((i) => i.status === 'active').length
   const used = items.filter((i) => i.status === 'used').length
   const discarded = items.filter((i) => i.status === 'discarded').length
 
-  function handleReset() {
-    if (confirm('Wipe all items and reload demo data?')) {
-      resetSeed()
-      toast.show('Demo data restored')
-    }
+  async function handleRefresh() {
+    await refresh()
+    toast.show('Synced with server')
   }
 
   return (
@@ -49,9 +47,9 @@ export function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Button variant="outline" className="w-full" onClick={handleReset}>
+        <Button variant="outline" className="w-full" onClick={handleRefresh}>
           <RotateCcw className="size-4" />
-          Reset to demo data
+          Sync with server
         </Button>
 
         <p className="text-xs text-muted-foreground text-center pt-2">GoWize · v0.1 (Draft)</p>

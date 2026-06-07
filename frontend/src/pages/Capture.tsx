@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, Image as ImageIcon, ChevronLeft, Loader2 } from 'lucide-react'
-import { fileToCompressedDataUrl } from '../lib/photo'
+import { fileToCompressedBlob } from '../lib/photo'
+import { api } from '../lib/api'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
@@ -16,12 +17,13 @@ export function CapturePage() {
     setError(null)
     setProcessing(true)
     try {
-      const dataUrl = await fileToCompressedDataUrl(file)
-      sessionStorage.setItem('capturePhoto', dataUrl)
+      const blob = await fileToCompressedBlob(file)
+      const result = await api.scan(blob)
+      sessionStorage.setItem('scanResult', JSON.stringify(result))
       navigate('/capture/confirm')
     } catch (e) {
       console.error(e)
-      setError("Couldn't read that image. Try another one.")
+      setError("Couldn't scan that image. Make sure the backend is running, then try again.")
       setProcessing(false)
     }
   }

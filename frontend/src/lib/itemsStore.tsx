@@ -1,79 +1,61 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { Item, ItemStatus } from '../types/item'
-import { mockItems } from './mockData'
-
-const STORAGE_KEY = 'gowize:items'
-const SEEDED_KEY = 'gowize:seeded'
+import { api, type ItemDraft } from './api'
 
 interface ItemsContextValue {
   items: Item[]
-  addItem: (item: Omit<Item, 'id' | 'createdAt' | 'status'>) => Item
-  updateItem: (id: string, patch: Partial<Item>) => void
-  setStatus: (id: string, status: ItemStatus) => void
-  deleteItem: (id: string) => void
-  resetSeed: () => void
+  loading: boolean
+  error: string | null
+  addItem: (draft: ItemDraft) => Promise<Item>
+  setStatus: (id: string, status: ItemStatus) => Promise<void>
+  deleteItem: (id: string) => Promise<void>
+  refresh: () => Promise<void>
 }
 
 const ItemsContext = createContext<ItemsContextValue | null>(null)
 
-function load(): Item[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as Item[]
-  } catch {
-    // fall through
-  }
-  if (!localStorage.getItem(SEEDED_KEY)) {
-    localStorage.setItem(SEEDED_KEY, '1')
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockItems))
-    return mockItems
-  }
-  return []
-}
-
-function save(items: Item[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-}
-
 export function ItemsProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<Item[]>(() => load())
+  const [items, setItems] = useState<Item[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      setItems(await api.listItems())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load items')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    save(items)
-  }, [items])
+    refresh()
+  }, [refresh])
 
-  const addItem = useCallback<ItemsContextValue['addItem']>((draft) => {
-    const item: Item = {
-      ...draft,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      status: 'active',
-    }
-    setItems((prev) => [item, ...prev])
-    return item
+  const addItem = useCallback<ItemsContextValue['addItem']>(async (draft) => {
+    const created = await api.createItem(draft)
+    setItems((prev) => [created, ...prev])
+    return created
   }, [])
 
-  const updateItem = useCallback<ItemsContextValue['updateItem']>((id, patch) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)))
+  const setStatus = useCallback<ItemsContextValue['setStatus']>(async (id, status) => {
+    const updated = await api.setItemStatus(id, status)
+    setItems((prev) => prev.map((i) => (i.id === id ? updated : i)))
   }, [])
 
-  const setStatus = useCallback<ItemsContextValue['setStatus']>((id, status) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)))
-  }, [])
-
-  const deleteItem = useCallback<ItemsContextValue['deleteItem']>((id) => {
+  const deleteItem = useCallback<ItemsContextValue['deleteItem']>(async (id) => {
+    await api.deleteItem(id)
     setItems((prev) => prev.filter((i) => i.id !== id))
   }, [])
 
-  const resetSeed = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem(SEEDED_KEY)
-    setItems(load())
-  }, [])
-
   return (
-    <ItemsContext.Provider value={{ items, addItem, updateItem, setStatus, deleteItem, resetSeed }}>
+    <ItemsContext.Provider
+      value={{ items, loading, error, addItem, setStatus, deleteItem, refresh }}
+    >
       {children}
     </ItemsContext.Provider>
   )

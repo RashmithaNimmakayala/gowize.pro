@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Sparkles, ChevronLeft, X, Minus, Plus } from 'lucide-react'
 import type { Category, DateType, FieldSource } from '../types/item'
 import { categoryLabel } from '../components/CategoryIcon'
 import { useItems } from '../lib/itemsStore'
 import { useToast } from '../components/Toast'
+import type { ScanResult } from '../lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,32 +19,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const MOCK_EXTRACTION = {
-  name: 'Greek Yogurt',
-  brand: 'Chobani',
-  category: 'grocery' as Category,
-  dateType: 'best-before' as DateType,
-  expiryDate: (() => {
-    const d = new Date()
-    d.setDate(d.getDate() + 5)
-    return d.toISOString().slice(0, 10)
-  })(),
-  packageSize: '200g',
-  sources: {
-    name: 'barcode' as FieldSource,
-    brand: 'barcode' as FieldSource,
-    category: 'auto' as FieldSource,
-    dateType: 'ocr' as FieldSource,
-    expiryDate: 'ocr' as FieldSource,
-    packageSize: 'ocr' as FieldSource,
-  },
-}
-
 const DEFAULT_LEAD: Record<Category, number> = {
   grocery: 2,
   medicine: 14,
   cosmetic: 7,
 }
+
+const CATEGORIES: Category[] = ['grocery', 'medicine', 'cosmetic']
 
 function AutoBadge({ source }: { source?: FieldSource }) {
   if (!source || source === 'manual') return null
@@ -61,24 +43,30 @@ export function ConfirmCardPage() {
   const { addItem } = useItems()
   const toast = useToast()
 
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  // Extraction handed over from the Capture screen via /api/scan.
+  const scan = useMemo<ScanResult | null>(() => {
+    const raw = sessionStorage.getItem('scanResult')
+    return raw ? (JSON.parse(raw) as ScanResult) : null
+  }, [])
+  const sources = (scan?.sources ?? {}) as Record<string, FieldSource>
+
+  const initialCategory = CATEGORIES.includes(scan?.category as Category)
+    ? (scan!.category as Category)
+    : 'grocery'
+
+  const [photoUrl, setPhotoUrl] = useState<string | null>(scan?.photoUrl ?? null)
   const [saving, setSaving] = useState(false)
 
-  const [name, setName] = useState(MOCK_EXTRACTION.name)
-  const [brand, setBrand] = useState(MOCK_EXTRACTION.brand)
-  const [category, setCategory] = useState<Category>(MOCK_EXTRACTION.category)
-  const [dateType, setDateType] = useState<DateType>(MOCK_EXTRACTION.dateType)
-  const [expiryDate, setExpiryDate] = useState(MOCK_EXTRACTION.expiryDate)
+  const [name, setName] = useState(scan?.name ?? '')
+  const [brand, setBrand] = useState(scan?.brand ?? '')
+  const [category, setCategory] = useState<Category>(initialCategory)
+  const [dateType, setDateType] = useState<DateType>((scan?.dateType as DateType) ?? 'expiry')
+  const [expiryDate, setExpiryDate] = useState(scan?.expiryDate ?? '')
   const [openedOn, setOpenedOn] = useState('')
   const [paoMonths, setPaoMonths] = useState(12)
-  const [packageSize, setPackageSize] = useState(MOCK_EXTRACTION.packageSize)
+  const [packageSize, setPackageSize] = useState(scan?.packageSize ?? '')
   const [countOwned, setCountOwned] = useState(1)
-  const [reminderLeadDays, setReminderLeadDays] = useState(DEFAULT_LEAD[MOCK_EXTRACTION.category])
-
-  useEffect(() => {
-    const url = sessionStorage.getItem('capturePhoto')
-    setPhotoUrl(url)
-  }, [])
+  const [reminderLeadDays, setReminderLeadDays] = useState(DEFAULT_LEAD[initialCategory])
 
   useEffect(() => {
     setReminderLeadDays(DEFAULT_LEAD[category])
@@ -86,9 +74,13 @@ export function ConfirmCardPage() {
 
   async function save() {
     if (saving) return
+    if (!name.trim()) {
+      toast.show('Please enter a product name')
+      return
+    }
     setSaving(true)
     try {
-      addItem({
+      await addItem({
         photoUrl: photoUrl ?? undefined,
         name: name.trim(),
         brand: brand.trim() || undefined,
@@ -100,12 +92,14 @@ export function ConfirmCardPage() {
         packageSize: packageSize.trim() || undefined,
         countOwned,
         reminderLeadDays,
-        sources: MOCK_EXTRACTION.sources,
+        sources,
       })
-      sessionStorage.removeItem('capturePhoto')
+      sessionStorage.removeItem('scanResult')
       toast.show(`${name} saved`)
       navigate('/')
-    } finally {
+    } catch (e) {
+      console.error(e)
+      toast.show("Couldn't save — is the backend running?")
       setSaving(false)
     }
   }
@@ -140,7 +134,7 @@ export function ConfirmCardPage() {
         <div className="mx-4 mt-4 p-3 bg-primary/5 rounded-xl border border-primary/20 flex items-start gap-2">
           <Sparkles className="size-4 text-primary shrink-0 mt-0.5" />
           <p className="text-xs text-primary/90">
-            We pre-filled what we could. Tap any field to change it.
+            We pre-filled what we could read. Tap any field to change it.
           </p>
         </div>
 
@@ -154,7 +148,7 @@ export function ConfirmCardPage() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="name">Product name</Label>
-              <AutoBadge source={MOCK_EXTRACTION.sources.name} />
+              <AutoBadge source={sources.name} />
             </div>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
@@ -164,7 +158,7 @@ export function ConfirmCardPage() {
               <Label htmlFor="brand">
                 Brand <span className="text-muted-foreground font-normal">(optional)</span>
               </Label>
-              <AutoBadge source={MOCK_EXTRACTION.sources.brand} />
+              <AutoBadge source={sources.brand} />
             </div>
             <Input id="brand" value={brand} onChange={(e) => setBrand(e.target.value)} />
           </div>
@@ -172,10 +166,10 @@ export function ConfirmCardPage() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label>Category</Label>
-              <AutoBadge source={MOCK_EXTRACTION.sources.category} />
+              <AutoBadge source={sources.category} />
             </div>
             <div className="grid grid-cols-3 gap-2">
-              {(['grocery', 'medicine', 'cosmetic'] as Category[]).map((c) => (
+              {CATEGORIES.map((c) => (
                 <Button
                   key={c}
                   type="button"
@@ -191,7 +185,7 @@ export function ConfirmCardPage() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label>Date type</Label>
-              <AutoBadge source={MOCK_EXTRACTION.sources.dateType} />
+              <AutoBadge source={sources.dateType} />
             </div>
             <Select value={dateType} onValueChange={(v) => setDateType(v as DateType)}>
               <SelectTrigger>
@@ -213,7 +207,7 @@ export function ConfirmCardPage() {
                 <Label htmlFor="expiry">
                   Expiry date <span className="text-destructive">*</span>
                 </Label>
-                <AutoBadge source={MOCK_EXTRACTION.sources.expiryDate} />
+                <AutoBadge source={sources.expiryDate} />
               </div>
               <Input
                 id="expiry"
@@ -255,7 +249,7 @@ export function ConfirmCardPage() {
               <Label htmlFor="size">
                 Package size <span className="text-muted-foreground font-normal">(optional)</span>
               </Label>
-              <AutoBadge source={MOCK_EXTRACTION.sources.packageSize} />
+              <AutoBadge source={sources.packageSize} />
             </div>
             <Input
               id="size"

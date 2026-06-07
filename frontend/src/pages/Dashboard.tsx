@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Loader2 } from 'lucide-react'
 import { useItems } from '../lib/itemsStore'
 import { daysUntilExpiry, urgencyTier, urgencyLabel } from '../lib/urgency'
 import type { UrgencyTier } from '../lib/urgency'
@@ -9,7 +10,7 @@ import { EmptyState } from '../components/EmptyState'
 const TIER_ORDER: UrgencyTier[] = ['expired', 'critical', 'soon', 'later', 'safe']
 
 export function DashboardPage() {
-  const { items } = useItems()
+  const { items, loading, error } = useItems()
 
   const grouped = useMemo(() => {
     const active = items.filter((i) => i.status === 'active')
@@ -38,7 +39,16 @@ export function DashboardPage() {
         </div>
       </header>
 
-      {totalActive === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+          <Loader2 className="size-6 animate-spin mb-2" />
+          <span className="text-sm">Loading your items…</span>
+        </div>
+      ) : error ? (
+        <div className="mx-4 mt-6 p-4 rounded-xl border border-destructive/20 bg-destructive/5 text-sm text-destructive">
+          Couldn't reach the server. Make sure the backend is running, then pull to refresh from Settings.
+        </div>
+      ) : totalActive === 0 ? (
         <EmptyState />
       ) : (
         <div className="px-4 pt-4 pb-24">
