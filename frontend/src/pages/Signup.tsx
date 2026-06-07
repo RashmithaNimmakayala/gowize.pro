@@ -24,6 +24,7 @@ import {
 import { PasswordInput } from '../components/PasswordInput'
 import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
+import { COUNTRIES, STATES_BY_COUNTRY } from '../lib/locations'
 import { cn } from '@/lib/utils'
 
 const COUNTRY_CODES = [
@@ -54,7 +55,7 @@ export function SignupPage() {
   const [addressLine1, setAddressLine1] = useState('')
   const [addressLine2, setAddressLine2] = useState('')
   const [stateName, setStateName] = useState('')
-  const [country, setCountry] = useState('')
+  const [country, setCountry] = useState('India')
   const [zipcode, setZipcode] = useState('')
   const [confirm, setConfirm] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -62,6 +63,7 @@ export function SignupPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const mismatch = confirm.length > 0 && password !== confirm
+  const stateOptions = STATES_BY_COUNTRY[country] ?? []
 
   const pwChecks = [
     { label: 'At least 8 characters', ok: password.length >= 8 },
@@ -261,14 +263,29 @@ export function SignupPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="state">State</Label>
-                  <Input
-                    id="state"
-                    required
-                    placeholder="State"
-                    autoComplete="address-level1"
-                    value={stateName}
-                    onChange={(e) => setStateName(e.target.value)}
-                  />
+                  {stateOptions.length > 0 ? (
+                    <Select value={stateName} onValueChange={setStateName}>
+                      <SelectTrigger id="state" className="w-full">
+                        <SelectValue placeholder="Select state" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stateOptions.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id="state"
+                      required
+                      placeholder="State / region"
+                      autoComplete="address-level1"
+                      value={stateName}
+                      onChange={(e) => setStateName(e.target.value)}
+                    />
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="zip">Zipcode</Label>
@@ -285,14 +302,24 @@ export function SignupPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  required
-                  placeholder="Country"
-                  autoComplete="country-name"
+                <Select
                   value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                />
+                  onValueChange={(v) => {
+                    setCountry(v)
+                    setStateName('') // states differ per country
+                  }}
+                >
+                  <SelectTrigger id="country" className="w-full">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <Button type="submit" size="lg" className="w-full" disabled={submitting}>
