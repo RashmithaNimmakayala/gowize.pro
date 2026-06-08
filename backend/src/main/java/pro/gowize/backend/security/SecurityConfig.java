@@ -37,7 +37,7 @@ public class SecurityConfig {
             .csrf(c -> c.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/api/auth/**", "/h2-console/**", "/actuator/health").permitAll()
+                .requestMatchers("/api/auth/**", "/h2-console/**", "/actuator/health", "/api/push/vapid-public-key").permitAll()
                 .anyRequest().authenticated()
             )
             .headers(h -> h.frameOptions(f -> f.sameOrigin()))

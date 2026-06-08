@@ -17,6 +17,15 @@ public class EmailService {
         this.from = from;
     }
 
+    public void sendReminder(String toEmail, String subject, String body) {
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setFrom(from);
+        msg.setTo(toEmail);
+        msg.setSubject(subject);
+        msg.setText(body);
+        mailSender.send(msg);
+    }
+
     public void sendOtp(String toEmail, String otp) {
         SimpleMailMessage msg = new SimpleMailMessage();
         msg.setFrom(from);

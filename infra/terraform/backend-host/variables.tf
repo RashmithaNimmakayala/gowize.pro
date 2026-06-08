@@ -67,6 +67,12 @@ variable "mail_from" {
   type        = string
 }
 
+variable "hosted_zone_id" {
+  description = "Route53 hosted zone ID for gowize.pro"
+  type        = string
+  default     = "Z01768041YCEGGRXQGW0K"
+}
+
 variable "cors_origins" {
   description = "Allowed browser origins for the API."
   type        = string
