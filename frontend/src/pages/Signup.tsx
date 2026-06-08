@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Leaf, Loader2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../lib/authContext'
 import { api } from '../lib/api'
-import { COUNTRIES, STATES_BY_COUNTRY } from '../lib/locations'
+import { fetchCountries, fetchStates } from '../lib/locations'
 import { COUNTRY_CODES } from '../lib/countryCodes'
 import { cn } from '@/lib/utils'
 
@@ -43,9 +43,19 @@ export function SignupPage() {
   const [issues, setIssues] = useState<string[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [serverError, setServerError] = useState('')
+  const [countries, setCountries] = useState<string[]>(['India'])
+  const [stateOptions, setStateOptions] = useState<string[]>([])
 
   const mismatch = confirm.length > 0 && password !== confirm
-  const stateOptions = STATES_BY_COUNTRY[country] ?? []
+
+  useEffect(() => {
+    fetchCountries().then(setCountries).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    setStateName('')
+    fetchStates(country).then(setStateOptions).catch(() => setStateOptions([]))
+  }, [country])
 
   const pwChecks = [
     { label: 'At least 8 characters', ok: password.length >= 8 },
@@ -295,12 +305,9 @@ export function SignupPage() {
                 <Label htmlFor="country">Country</Label>
                 <Combobox
                   id="country"
-                  options={COUNTRIES}
+                  options={countries}
                   value={country}
-                  onChange={(v) => {
-                    setCountry(v)
-                    setStateName('') // states differ per country
-                  }}
+                  onChange={setCountry}
                   placeholder="Select country"
                   searchPlaceholder="Search country…"
                 />
