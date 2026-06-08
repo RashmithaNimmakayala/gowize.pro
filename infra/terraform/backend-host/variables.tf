@@ -39,6 +39,29 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
+variable "mail_host" {
+  description = "SMTP host for sending OTP emails."
+  type        = string
+  default     = "smtp.gmail.com"
+}
+
+variable "mail_port" {
+  description = "SMTP port."
+  type        = number
+  default     = 587
+}
+
+variable "mail_username" {
+  description = "SMTP username / sender email address."
+  type        = string
+}
+
+variable "mail_password" {
+  description = "SMTP password or app password."
+  type        = string
+  sensitive   = true
+}
+
 variable "cors_origins" {
   description = "Allowed browser origins for the API."
   type        = string

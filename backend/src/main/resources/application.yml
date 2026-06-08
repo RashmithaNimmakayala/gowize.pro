@@ -37,6 +37,19 @@ gowize:
     secret: ${JWT_SECRET:change-me-in-production-use-32-chars-min}
     expiry-ms: ${JWT_EXPIRY_MS:86400000}
 
+spring:
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 ---
 # Production profile: Postgres (RDS). Activate with SPRING_PROFILES_ACTIVE=prod.
 spring:
