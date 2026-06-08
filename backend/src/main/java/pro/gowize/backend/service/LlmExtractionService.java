@@ -45,8 +45,11 @@ public class LlmExtractionService {
             Set.of("best-before", "use-by", "expiry", "manufacture", "pao");
 
     private static final String SYSTEM_PROMPT = """
-            You are a product-label reader. Look at the photo of a packaged product and \
-            extract its details. Respond with ONLY a single JSON object — no prose, no \
+            You are a product-label reader. Look at the photo(s) of a packaged product and \
+            extract its details. You may receive more than one photo of the same product \
+            (e.g. front label, back label, barcode side) — cross-reference all of them and \
+            merge what you find into a single answer; do not report conflicting values per \
+            photo. Respond with ONLY a single JSON object — no prose, no \
             markdown code fences — matching exactly this shape:
             {
               "name": string or null,
@@ -74,14 +77,17 @@ public class LlmExtractionService {
         this.model = model;
     }
 
-    public Parsed extract(MultipartFile file) {
+    public Parsed extract(List<MultipartFile> files) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("openrouter.api-key is not configured; skipping LLM extraction");
             return Parsed.empty();
         }
         try {
-            String dataUri = toDataUri(file);
-            String content = callOpenRouter(dataUri);
+            List<String> dataUris = new java.util.ArrayList<>();
+            for (MultipartFile file : files) {
+                dataUris.add(toDataUri(file));
+            }
+            String content = callOpenRouter(dataUris);
             return parseModelOutput(content);
         } catch (Exception e) {
             log.warn("LLM extraction failed; returning empty result", e);
@@ -98,28 +104,41 @@ public class LlmExtractionService {
         return "data:" + contentType + ";base64," + base64;
     }
 
-    private String callOpenRouter(String imageDataUri) {
+    private String callOpenRouter(List<String> imageDataUris) {
+        String prompt = imageDataUris.size() > 1
+                ? "Extract the product details from these photos of the same product."
+                : "Extract the product details from this photo.";
+
+        List<Object> userContent = new java.util.ArrayList<>();
+        userContent.add(java.util.Map.of("type", "text", "text", prompt));
+        for (String dataUri : imageDataUris) {
+            userContent.add(java.util.Map.of("type", "image_url", "image_url", java.util.Map.of("url", dataUri)));
+        }
+
         var requestBody = new java.util.LinkedHashMap<String, Object>();
         requestBody.put("model", model);
         requestBody.put("messages", List.of(
                 java.util.Map.of("role", "system", "content", SYSTEM_PROMPT),
-                java.util.Map.of("role", "user", "content", List.of(
-                        java.util.Map.of("type", "text", "text", "Extract the product details from this photo."),
-                        java.util.Map.of("type", "image_url", "image_url", java.util.Map.of("url", imageDataUri))
-                ))
+                java.util.Map.of("role", "user", "content", userContent)
         ));
 
-        JsonNode response = restClient.post()
+        String raw = restClient.post()
                 .header("Authorization", "Bearer " + apiKey)
                 .header("Content-Type", "application/json")
                 .header("HTTP-Referer", "https://gowize.pro")
                 .header("X-Title", "GoWize")
                 .body(requestBody)
                 .retrieve()
-                .body(JsonNode.class);
+                .body(String.class);
 
-        if (response == null) {
+        if (raw == null || raw.isBlank()) {
             throw new IllegalStateException("OpenRouter returned an empty response");
+        }
+        JsonNode response;
+        try {
+            response = objectMapper.readTree(raw);
+        } catch (Exception e) {
+            throw new IllegalStateException("OpenRouter returned non-JSON response: " + raw, e);
         }
         JsonNode choices = response.path("choices");
         if (!choices.isArray() || choices.isEmpty()) {

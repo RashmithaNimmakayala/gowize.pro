@@ -28,9 +28,10 @@ async function unwrap<T>(res: Response): Promise<T> {
 }
 
 export const api = {
-  async scan(image: Blob): Promise<ScanResult> {
+  /** Scan one or more photos of the same product (e.g. front, back, barcode side). */
+  async scan(images: Blob[]): Promise<ScanResult> {
     const form = new FormData()
-    form.append('file', image, 'scan.jpg')
+    images.forEach((image, i) => form.append('files', image, `scan-${i}.jpg`))
     return unwrap<ScanResult>(await fetch(`${BASE}/api/scan`, { method: 'POST', body: form }))
   },
 

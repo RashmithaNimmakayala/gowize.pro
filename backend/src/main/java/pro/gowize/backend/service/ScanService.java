@@ -18,12 +18,17 @@ public class ScanService {
         this.llmExtractionService = llmExtractionService;
     }
 
-    public ScanResponse scan(MultipartFile file) {
-        // 1. Store the original photo in S3.
-        String key = s3Service.upload(file);
+    public ScanResponse scan(List<MultipartFile> files) {
+        // 1. Store every photo in S3; the first becomes the item's cover photo.
+        String coverKey = null;
+        for (MultipartFile file : files) {
+            String key = s3Service.upload(file);
+            if (coverKey == null) coverKey = key;
+        }
 
-        // 2. Ask the vision LLM to read the label directly from the photo.
-        LlmExtractionService.Parsed p = llmExtractionService.extract(file);
+        // 2. Ask the vision LLM to read the label across all photos at once,
+        //    so it can cross-reference (e.g. name on the front, expiry on the back).
+        LlmExtractionService.Parsed p = llmExtractionService.extract(files);
 
         // 3. Provenance: anything we filled came from the LLM.
         Map<String, String> sources = new LinkedHashMap<>();
@@ -41,7 +46,7 @@ public class ScanService {
                 p.dateType(),
                 p.expiryDate(),
                 p.packageSize(),
-                s3Service.presignedGetUrl(key),
+                s3Service.presignedGetUrl(coverKey),
                 sources,
                 List.of());
     }

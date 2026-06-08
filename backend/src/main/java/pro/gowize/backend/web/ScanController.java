@@ -1,5 +1,6 @@
 package pro.gowize.backend.web;
 
+import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,12 +21,16 @@ public class ScanController {
         this.scanService = scanService;
     }
 
-    /** Upload a product photo; returns best-effort extracted fields. */
+    /**
+     * Upload one or more photos of the same product (e.g. front, back, barcode
+     * side); returns best-effort extracted fields merged across all of them.
+     */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ScanResponse> scan(@RequestParam("file") MultipartFile file) {
-        if (file == null || file.isEmpty()) {
+    public ResponseEntity<ScanResponse> scan(@RequestParam("files") List<MultipartFile> files) {
+        if (files == null || files.isEmpty() || files.stream().allMatch(MultipartFile::isEmpty)) {
             return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(scanService.scan(file));
+        List<MultipartFile> nonEmpty = files.stream().filter(f -> !f.isEmpty()).toList();
+        return ResponseEntity.ok(scanService.scan(nonEmpty));
     }
 }
