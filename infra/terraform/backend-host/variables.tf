@@ -20,7 +20,7 @@ variable "subnet_ids" {
 variable "scans_bucket" {
   description = "Existing S3 bucket the app uses for scan uploads."
   type        = string
-  default     = "remindly-scans-470999030508"
+  default     = "gowize-scans-470999030508"
 }
 
 variable "db_name" {
