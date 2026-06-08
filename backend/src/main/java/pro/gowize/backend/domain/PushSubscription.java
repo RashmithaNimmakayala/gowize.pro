@@ -1,0 +1,41 @@
+package pro.gowize.backend.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "push_subscriptions")
+public class PushSubscription {
+
+    @Id
+    private String id;
+
+    @Column(nullable = false)
+    private String userId;
+
+    @Column(nullable = false, length = 512)
+    private String endpoint;
+
+    @Column(nullable = false)
+    private String p256dh;
+
+    @Column(nullable = false)
+    private String auth;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+
+    public String getEndpoint() { return endpoint; }
+    public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
+
+    public String getP256dh() { return p256dh; }
+    public void setP256dh(String p256dh) { this.p256dh = p256dh; }
+
+    public String getAuth() { return auth; }
+    public void setAuth(String auth) { this.auth = auth; }
+}

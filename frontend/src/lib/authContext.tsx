@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import type { AuthPayload } from './api'
+import { registerPushNotifications, unregisterPushNotifications } from './pushNotifications'
 
 interface AuthUser {
   id: string
@@ -32,9 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const u = { id: payload.id, name: payload.name, email: payload.email }
     localStorage.setItem('user', JSON.stringify(u))
     setUser(u)
+    registerPushNotifications()
   }
 
   function logout() {
+    unregisterPushNotifications()
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setUser(null)

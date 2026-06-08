@@ -90,6 +90,25 @@ export const api = {
     )
   },
 
+  async subscribePush(data: { endpoint: string; p256dh: string; auth: string }): Promise<void> {
+    await unwrap<void>(
+      await fetch(`${BASE}/api/push/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(data),
+      }),
+    )
+  },
+
+  async unsubscribePush(endpoint: string): Promise<void> {
+    await unwrap<void>(
+      await fetch(`${BASE}/api/push/subscribe?endpoint=${encodeURIComponent(endpoint)}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      }),
+    )
+  },
+
   async scan(image: Blob): Promise<ScanResult> {
     const form = new FormData()
     form.append('file', image, 'scan.jpg')

@@ -82,6 +82,11 @@ data "aws_iam_policy_document" "app" {
     actions   = ["textract:DetectDocumentText", "textract:AnalyzeDocument", "textract:AnalyzeExpense"]
     resources = ["*"]
   }
+  statement {
+    sid       = "SNSSendSms"
+    actions   = ["sns:Publish"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "task_app" {
