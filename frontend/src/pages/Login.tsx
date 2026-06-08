@@ -8,24 +8,33 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { PasswordInput } from '../components/PasswordInput'
 import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
+import { useAuth } from '../lib/authContext'
+import { api } from '../lib/api'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (submitting) return
     setSubmitting(true)
-    // UI-only for now — real authentication is wired up later.
-    window.setTimeout(() => {
-      setSubmitting(false)
-      toast.show('Login is UI-only for now')
+    setError('')
+    try {
+      const payload = await api.login(email, password)
+      login(payload)
       navigate('/')
-    }, 500)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed')
+      toast.show('Invalid email or password')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -95,6 +104,8 @@ export function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
+
+              {error && <p className="text-xs text-destructive">{error}</p>}
 
               <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Sign in'}

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,34 +31,39 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemResponse> list(@RequestParam(required = false) String status) {
-        return service.list(status).stream().map(ItemResponse::from).toList();
+    public List<ItemResponse> list(@AuthenticationPrincipal String userId,
+                                   @RequestParam(required = false) String status) {
+        return service.list(userId, status).stream().map(ItemResponse::from).toList();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ItemResponse> get(@PathVariable String id) {
-        Item item = service.get(id);
+    public ResponseEntity<ItemResponse> get(@AuthenticationPrincipal String userId,
+                                            @PathVariable String id) {
+        Item item = service.get(id, userId);
         return item == null ? ResponseEntity.notFound().build()
                 : ResponseEntity.ok(ItemResponse.from(item));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemResponse create(@Valid @RequestBody CreateItemRequest request) {
-        return ItemResponse.from(service.create(request));
+    public ItemResponse create(@AuthenticationPrincipal String userId,
+                               @Valid @RequestBody CreateItemRequest request) {
+        return ItemResponse.from(service.create(userId, request));
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<ItemResponse> updateStatus(@PathVariable String id,
+    public ResponseEntity<ItemResponse> updateStatus(@AuthenticationPrincipal String userId,
+                                                     @PathVariable String id,
                                                      @RequestParam String status) {
-        Item item = service.updateStatus(id, status);
+        Item item = service.updateStatus(id, userId, status);
         return item == null ? ResponseEntity.notFound().build()
                 : ResponseEntity.ok(ItemResponse.from(item));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        return service.delete(id) ? ResponseEntity.noContent().build()
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal String userId,
+                                       @PathVariable String id) {
+        return service.delete(id, userId) ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
     }
 }
