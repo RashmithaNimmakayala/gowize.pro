@@ -5,7 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import pro.gowize.backend.domain.Item;
 
 public interface ItemRepository extends JpaRepository<Item, String> {
-    List<Item> findAllByOrderByCreatedAtDesc();
+    List<Item> findByUserIdOrderByCreatedAtDesc(String userId);
 
-    List<Item> findByStatusOrderByCreatedAtDesc(String status);
+    List<Item> findByUserIdAndStatusOrderByCreatedAtDesc(String userId, String status);
+
+    boolean existsByIdAndUserId(String id, String userId);
 }

@@ -1,10 +1,14 @@
-output "api_url" {
-  description = "Public base URL of the backend (Elastic Beanstalk environment)."
-  value       = "http://${aws_elastic_beanstalk_environment.env.cname}"
+output "ecr_repository_url" {
+  description = "ECR URL to push Docker images to."
+  value       = aws_ecr_repository.app.repository_url
 }
 
-output "eb_cname" {
-  value = aws_elastic_beanstalk_environment.env.cname
+output "ecs_cluster_name" {
+  value = aws_ecs_cluster.main.name
+}
+
+output "ecs_service_name" {
+  value = aws_ecs_service.app.name
 }
 
 output "rds_endpoint" {

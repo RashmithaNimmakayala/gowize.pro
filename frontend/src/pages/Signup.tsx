@@ -1,16 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Leaf, Loader2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Dialog,
@@ -23,35 +16,21 @@ import {
 } from '@/components/ui/dialog'
 import { PasswordInput } from '../components/PasswordInput'
 import { Combobox } from '../components/Combobox'
-import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
-import { COUNTRIES, STATES_BY_COUNTRY } from '../lib/locations'
+import { useAuth } from '../lib/authContext'
+import { api } from '../lib/api'
+import { fetchCountries, fetchStates } from '../lib/locations'
+import { COUNTRY_CODES } from '../lib/countryCodes'
 import { cn } from '@/lib/utils'
-
-const COUNTRY_CODES = [
-  { flag: '🇮🇳', dial: '+91', name: 'India' },
-  { flag: '🇺🇸', dial: '+1', name: 'United States' },
-  { flag: '🇬🇧', dial: '+44', name: 'United Kingdom' },
-  { flag: '🇦🇪', dial: '+971', name: 'UAE' },
-  { flag: '🇦🇺', dial: '+61', name: 'Australia' },
-  { flag: '🇸🇬', dial: '+65', name: 'Singapore' },
-  { flag: '🇩🇪', dial: '+49', name: 'Germany' },
-  { flag: '🇫🇷', dial: '+33', name: 'France' },
-  { flag: '🇯🇵', dial: '+81', name: 'Japan' },
-  { flag: '🇨🇳', dial: '+86', name: 'China' },
-  { flag: '🇧🇷', dial: '+55', name: 'Brazil' },
-  { flag: '🇿🇦', dial: '+27', name: 'South Africa' },
-  { flag: '🇵🇰', dial: '+92', name: 'Pakistan' },
-  { flag: '🇧🇩', dial: '+880', name: 'Bangladesh' },
-]
 
 export function SignupPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { login } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [countryCode, setCountryCode] = useState('+91')
+  const [dialLabel, setDialLabel] = useState('🇮🇳 India +91')
   const [mobile, setMobile] = useState('')
   const [addressLine1, setAddressLine1] = useState('')
   const [addressLine2, setAddressLine2] = useState('')
@@ -62,9 +41,20 @@ export function SignupPage() {
   const [submitting, setSubmitting] = useState(false)
   const [issues, setIssues] = useState<string[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [serverError, setServerError] = useState('')
+  const [countries, setCountries] = useState<string[]>(['India'])
+  const [stateOptions, setStateOptions] = useState<string[]>([])
 
   const mismatch = confirm.length > 0 && password !== confirm
-  const stateOptions = STATES_BY_COUNTRY[country] ?? []
+
+  useEffect(() => {
+    fetchCountries().then(setCountries).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    setStateName('')
+    fetchStates(country).then(setStateOptions).catch(() => setStateOptions([]))
+  }, [country])
 
   const pwChecks = [
     { label: 'At least 8 characters', ok: password.length >= 8 },
@@ -74,7 +64,7 @@ export function SignupPage() {
   ]
   const passwordValid = pwChecks.every((c) => c.ok)
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (submitting) return
 
@@ -88,12 +78,28 @@ export function SignupPage() {
     }
 
     setSubmitting(true)
-    // UI-only for now — real account creation is wired up later.
-    window.setTimeout(() => {
-      setSubmitting(false)
-      toast.show('Sign-up is UI-only for now')
+    setServerError('')
+    try {
+      const payload = await api.register({
+        name,
+        email,
+        password,
+        phone: mobile ? `${COUNTRY_CODES.find((c) => `${c.flag} ${c.name} ${c.dial}` === dialLabel)?.dial ?? ''}${mobile}` : undefined,
+        addressLine1: addressLine1 || undefined,
+        addressLine2: addressLine2 || undefined,
+        state: stateName || undefined,
+        country: country || undefined,
+        zipcode: zipcode || undefined,
+      })
+      login(payload)
       navigate('/')
-    }, 500)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Registration failed'
+      setServerError(msg)
+      toast.show(msg)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -113,26 +119,6 @@ export function SignupPage() {
             <CardDescription>Start tracking what expires before it does.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="w-full"
-              onClick={() => toast.show('Google sign-up coming soon')}
-            >
-              <GoogleIcon />
-              Continue with Google
-            </Button>
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">or</span>
-              </div>
-            </div>
-
             <form className="space-y-4" onSubmit={onSubmit}>
               <div className="space-y-1.5">
                 <Label htmlFor="name">Name</Label>
@@ -211,18 +197,15 @@ export function SignupPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="mobile">Mobile number</Label>
                 <div className="flex gap-2">
-                  <Select value={countryCode} onValueChange={setCountryCode}>
-                    <SelectTrigger className="w-28 shrink-0" aria-label="Country code">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRY_CODES.map((c) => (
-                        <SelectItem key={c.dial} value={c.dial}>
-                          {c.flag} {c.dial}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Combobox
+                    id="dial-code"
+                    options={COUNTRY_CODES.map((c) => `${c.flag} ${c.name} ${c.dial}`)}
+                    value={dialLabel}
+                    onChange={setDialLabel}
+                    placeholder="Select country"
+                    searchPlaceholder="Search country…"
+                    className="w-52 shrink-0"
+                  />
                   <Input
                     id="mobile"
                     type="tel"
@@ -301,16 +284,15 @@ export function SignupPage() {
                 <Label htmlFor="country">Country</Label>
                 <Combobox
                   id="country"
-                  options={COUNTRIES}
+                  options={countries}
                   value={country}
-                  onChange={(v) => {
-                    setCountry(v)
-                    setStateName('') // states differ per country
-                  }}
+                  onChange={setCountry}
                   placeholder="Select country"
                   searchPlaceholder="Search country…"
                 />
               </div>
+
+              {serverError && <p className="text-xs text-destructive">{serverError}</p>}
 
               <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Create account'}

@@ -20,6 +20,7 @@ interface ComboboxProps {
   placeholder?: string
   searchPlaceholder?: string
   emptyText?: string
+  className?: string
 }
 
 /** A searchable single-select (type to filter). */
@@ -31,6 +32,7 @@ export function Combobox({
   placeholder = 'Select…',
   searchPlaceholder = 'Search…',
   emptyText = 'No results.',
+  className,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false)
 
@@ -43,7 +45,7 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn('w-full justify-between font-normal', !value && 'text-muted-foreground')}
+          className={cn('w-full justify-between font-normal', !value && 'text-muted-foreground', className)}
         >
           {value || placeholder}
           <ChevronsUpDown className="size-4 opacity-50" />

@@ -17,21 +17,24 @@ public class ItemService {
         this.repo = repo;
     }
 
-    public List<Item> list(String status) {
+    public List<Item> list(String userId, String status) {
         return status == null || status.isBlank()
-                ? repo.findAllByOrderByCreatedAtDesc()
-                : repo.findByStatusOrderByCreatedAtDesc(status);
+                ? repo.findByUserIdOrderByCreatedAtDesc(userId)
+                : repo.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
     }
 
-    public Item get(String id) {
-        return repo.findById(id).orElse(null);
+    public Item get(String id, String userId) {
+        return repo.findById(id)
+                .filter(i -> i.getUserId().equals(userId))
+                .orElse(null);
     }
 
-    public Item create(CreateItemRequest r) {
+    public Item create(String userId, CreateItemRequest r) {
         Item item = new Item();
         item.setId(UUID.randomUUID().toString());
         item.setCreatedAt(Instant.now());
         item.setStatus("active");
+        item.setUserId(userId);
         item.setPhotoUrl(r.photoUrl());
         item.setName(r.name());
         item.setBrand(r.brand());
@@ -47,15 +50,20 @@ public class ItemService {
         return repo.save(item);
     }
 
-    public Item updateStatus(String id, String status) {
-        Item item = repo.findById(id).orElse(null);
+    public Item updateStatus(String id, String userId, String status) {
+        Item item = repo.findById(id)
+                .filter(i -> i.getUserId().equals(userId))
+                .orElse(null);
         if (item == null) return null;
         item.setStatus(status);
         return repo.save(item);
     }
 
-    public boolean delete(String id) {
-        if (!repo.existsById(id)) return false;
+    public boolean delete(String id, String userId) {
+        Item item = repo.findById(id)
+                .filter(i -> i.getUserId().equals(userId))
+                .orElse(null);
+        if (item == null) return false;
         repo.deleteById(id);
         return true;
     }

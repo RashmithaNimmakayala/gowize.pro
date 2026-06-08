@@ -6,26 +6,34 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { PasswordInput } from '../components/PasswordInput'
-import { GoogleIcon } from '../components/GoogleIcon'
 import { useToast } from '../components/Toast'
+import { useAuth } from '../lib/authContext'
+import { api } from '../lib/api'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (submitting) return
     setSubmitting(true)
-    // UI-only for now — real authentication is wired up later.
-    window.setTimeout(() => {
-      setSubmitting(false)
-      toast.show('Login is UI-only for now')
+    setError('')
+    try {
+      const payload = await api.login(email, password)
+      login(payload)
       navigate('/')
-    }, 500)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed')
+      toast.show('Invalid email or password')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -45,26 +53,6 @@ export function LoginPage() {
             <CardDescription>Enter your details to access your items.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="w-full"
-              onClick={() => toast.show('Google sign-in coming soon')}
-            >
-              <GoogleIcon />
-              Continue with Google
-            </Button>
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">or</span>
-              </div>
-            </div>
-
             <form className="space-y-4" onSubmit={onSubmit}>
               <div className="space-y-1.5">
                 <Label htmlFor="email">Email</Label>
@@ -95,6 +83,8 @@ export function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
+
+              {error && <p className="text-xs text-destructive">{error}</p>}
 
               <Button type="submit" size="lg" className="w-full" disabled={submitting}>
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Sign in'}
