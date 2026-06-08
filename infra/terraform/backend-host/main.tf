@@ -70,11 +70,6 @@ data "aws_iam_policy_document" "app" {
     actions   = ["s3:ListBucket"]
     resources = ["arn:aws:s3:::${var.scans_bucket}"]
   }
-  statement {
-    sid       = "Textract"
-    actions   = ["textract:DetectDocumentText", "textract:AnalyzeDocument", "textract:AnalyzeExpense"]
-    resources = ["*"]
-  }
 }
 
 resource "aws_iam_role_policy" "app" {
@@ -282,6 +277,13 @@ resource "aws_elastic_beanstalk_environment" "env" {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "REMINDLY_S3_BUCKET"
     value     = var.scans_bucket
+  }
+  # Vision-LLM photo extraction (OpenRouter). Sourced from a sensitive TF var
+  # supplied via TF_VAR_openrouter_api_key — never committed to tfvars.
+  setting {
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "OPENROUTER_API_KEY"
+    value     = var.openrouter_api_key
   }
   # Both spellings so @Value relaxed-binding resolves regardless of dash handling.
   setting {

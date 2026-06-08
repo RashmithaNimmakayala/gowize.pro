@@ -7,7 +7,6 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.textract.TextractClient;
 
 /**
  * AWS SDK v2 clients. Credentials come from the default provider chain
@@ -34,14 +33,6 @@ public class AwsConfig {
     @Bean
     public S3Presigner s3Presigner() {
         return S3Presigner.builder()
-                .region(region)
-                .credentialsProvider(DefaultCredentialsProvider.create())
-                .build();
-    }
-
-    @Bean
-    public TextractClient textractClient() {
-        return TextractClient.builder()
                 .region(region)
                 .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();

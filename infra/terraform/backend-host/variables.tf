@@ -55,6 +55,12 @@ variable "cors_origins" {
   default     = "https://d9mna2jm5ltjk.cloudfront.net,https://gowize.pro,https://www.gowize.pro"
 }
 
+variable "openrouter_api_key" {
+  description = "OpenRouter API key used for vision-LLM photo extraction. Supply via TF_VAR_openrouter_api_key — never commit a real value."
+  type        = string
+  sensitive   = true
+}
+
 variable "bundle_path" {
   description = "Local path to the EB application bundle (zip with application.jar)."
   type        = string

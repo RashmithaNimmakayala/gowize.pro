@@ -7,7 +7,7 @@ export type DateType =
   | 'manufacture'
   | 'pao'
 
-export type FieldSource = 'barcode' | 'ocr' | 'auto' | 'manual'
+export type FieldSource = 'barcode' | 'ocr' | 'llm' | 'auto' | 'manual'
 
 export type ItemStatus = 'active' | 'used' | 'discarded'
 

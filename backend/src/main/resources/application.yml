@@ -28,6 +28,13 @@ aws:
   s3:
     bucket: ${REMINDLY_S3_BUCKET:}
 
+# Vision-LLM photo extraction (replaces Textract OCR). Key comes from an env
+# var only — never commit a real value here.
+openrouter:
+  api-key: ${OPENROUTER_API_KEY:}
+  model: ${OPENROUTER_MODEL:anthropic/claude-sonnet-4}
+  base-url: https://openrouter.ai/api/v1/chat/completions
+
 # Origins allowed to call the API (the PWA, dev + prod).
 gowize:
   cors:

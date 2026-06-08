@@ -29,7 +29,8 @@ const CATEGORIES: Category[] = ['grocery', 'medicine', 'cosmetic']
 
 function AutoBadge({ source }: { source?: FieldSource }) {
   if (!source || source === 'manual') return null
-  const label = source === 'barcode' ? 'Barcode' : source === 'ocr' ? 'OCR' : 'Auto'
+  const label =
+    source === 'barcode' ? 'Barcode' : source === 'ocr' ? 'OCR' : source === 'llm' ? 'AI' : 'Auto'
   return (
     <Badge variant="secondary" className="bg-primary/10 text-primary gap-1">
       <Sparkles className="size-2.5" />
