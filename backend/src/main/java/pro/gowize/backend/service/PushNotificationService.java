@@ -20,14 +20,11 @@ public class PushNotificationService {
     private static final Logger log = LoggerFactory.getLogger(PushNotificationService.class);
 
     private final PushSubscriptionRepository subscriptionRepo;
-    private final ObjectMapper objectMapper;
-    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
-    public PushNotificationService(PushSubscriptionRepository subscriptionRepo,
-                                   ObjectMapper objectMapper) {
+    public PushNotificationService(PushSubscriptionRepository subscriptionRepo) {
         this.subscriptionRepo = subscriptionRepo;
-        this.objectMapper = objectMapper;
-        this.httpClient = HttpClient.newHttpClient();
     }
 
     public void sendToUser(String userId, String title, String body) {
