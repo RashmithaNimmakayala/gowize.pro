@@ -225,6 +225,7 @@ resource "aws_ecs_task_definition" "app" {
       { name = "MAIL_PORT",                  value = tostring(var.mail_port) },
       { name = "MAIL_USERNAME",              value = var.mail_username },
       { name = "MAIL_PASSWORD",              value = var.mail_password },
+      { name = "MAIL_FROM",                  value = var.mail_from },
     ]
 
     logConfiguration = {

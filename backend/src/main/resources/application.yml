@@ -50,6 +50,10 @@ spring:
           starttls:
             enable: true
 
+gowize:
+  mail:
+    from: ${MAIL_FROM:${spring.mail.username}}
+
 ---
 # Production profile: Postgres (RDS). Activate with SPRING_PROFILES_ACTIVE=prod.
 spring:

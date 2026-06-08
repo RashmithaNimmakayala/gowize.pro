@@ -62,6 +62,11 @@ variable "mail_password" {
   sensitive   = true
 }
 
+variable "mail_from" {
+  description = "The verified sender email address shown in the From field."
+  type        = string
+}
+
 variable "cors_origins" {
   description = "Allowed browser origins for the API."
   type        = string

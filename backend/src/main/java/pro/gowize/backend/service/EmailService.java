@@ -12,7 +12,7 @@ public class EmailService {
     private final String from;
 
     public EmailService(JavaMailSender mailSender,
-                        @Value("${spring.mail.username}") String from) {
+                        @Value("${gowize.mail.from}") String from) {
         this.mailSender = mailSender;
         this.from = from;
     }
