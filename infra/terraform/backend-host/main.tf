@@ -11,54 +11,61 @@ resource "random_password" "db" {
 }
 
 # ==========================================================================
-# IAM — Elastic Beanstalk service role + EC2 instance role
+# ECR — Docker image repository
 # ==========================================================================
-data "aws_iam_policy_document" "eb_service_assume" {
+resource "aws_ecr_repository" "app" {
+  name                 = local.app_name
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+resource "aws_ecr_lifecycle_policy" "app" {
+  repository = aws_ecr_repository.app.name
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep last 10 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 10
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
+# ==========================================================================
+# IAM — ECS task execution role + task role
+# ==========================================================================
+data "aws_iam_policy_document" "ecs_assume" {
   statement {
     actions = ["sts:AssumeRole"]
     principals {
       type        = "Service"
-      identifiers = ["elasticbeanstalk.amazonaws.com"]
+      identifiers = ["ecs-tasks.amazonaws.com"]
     }
   }
 }
 
-resource "aws_iam_role" "eb_service" {
-  name               = "${local.app_name}-eb-service"
-  assume_role_policy = data.aws_iam_policy_document.eb_service_assume.json
+resource "aws_iam_role" "execution" {
+  name               = "${local.app_name}-execution"
+  assume_role_policy = data.aws_iam_policy_document.ecs_assume.json
 }
 
-resource "aws_iam_role_policy_attachment" "eb_service_health" {
-  role       = aws_iam_role.eb_service.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkEnhancedHealth"
+resource "aws_iam_role_policy_attachment" "execution_basic" {
+  role       = aws_iam_role.execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_iam_role_policy_attachment" "eb_service_updates" {
-  role       = aws_iam_role.eb_service.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkManagedUpdatesCustomerRolePolicy"
+resource "aws_iam_role" "task" {
+  name               = "${local.app_name}-task"
+  assume_role_policy = data.aws_iam_policy_document.ecs_assume.json
 }
 
-data "aws_iam_policy_document" "ec2_assume" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "instance" {
-  name               = "${local.app_name}-instance"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume.json
-}
-
-resource "aws_iam_role_policy_attachment" "web_tier" {
-  role       = aws_iam_role.instance.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
-}
-
-# App's own AWS access (scan bucket + Textract) via the instance role — no static keys.
 data "aws_iam_policy_document" "app" {
   statement {
     sid       = "ScanBucketObjects"
@@ -77,29 +84,24 @@ data "aws_iam_policy_document" "app" {
   }
 }
 
-resource "aws_iam_role_policy" "app" {
+resource "aws_iam_role_policy" "task_app" {
   name   = "${local.app_name}-app"
-  role   = aws_iam_role.instance.id
+  role   = aws_iam_role.task.id
   policy = data.aws_iam_policy_document.app.json
-}
-
-resource "aws_iam_instance_profile" "instance" {
-  name = "${local.app_name}-instance-profile"
-  role = aws_iam_role.instance.name
 }
 
 # ==========================================================================
 # Security groups
 # ==========================================================================
-resource "aws_security_group" "eb" {
-  name        = "${local.app_name}-eb"
-  description = "GoWize EB instance"
+resource "aws_security_group" "ecs" {
+  name        = "${local.app_name}-ecs"
+  description = "GoWize ECS tasks"
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
+    description = "HTTP from anywhere (CloudFront fronts this)"
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -118,11 +120,11 @@ resource "aws_security_group" "rds" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "Postgres from EB instances"
+    description     = "Postgres from ECS tasks"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.eb.id]
+    security_groups = [aws_security_group.ecs.id]
   }
 
   egress {
@@ -162,136 +164,101 @@ resource "aws_db_instance" "main" {
 }
 
 # ==========================================================================
-# Elastic Beanstalk application + version (bundle in S3)
+# CloudWatch log group
 # ==========================================================================
-resource "aws_s3_bucket" "artifacts" {
-  bucket = var.artifacts_bucket
+resource "aws_cloudwatch_log_group" "app" {
+  name              = "/ecs/${local.app_name}"
+  retention_in_days = 30
 }
 
-resource "aws_s3_object" "bundle" {
-  bucket = aws_s3_bucket.artifacts.id
-  key    = "bundles/eb-bundle-${filemd5(var.bundle_path)}.zip"
-  source = var.bundle_path
-  etag   = filemd5(var.bundle_path)
-}
-
-resource "aws_elastic_beanstalk_application" "app" {
+# ==========================================================================
+# ECS Cluster
+# ==========================================================================
+resource "aws_ecs_cluster" "main" {
   name = local.app_name
 }
 
-resource "aws_elastic_beanstalk_application_version" "v" {
-  name        = "v-${substr(filemd5(var.bundle_path), 0, 8)}"
-  application = aws_elastic_beanstalk_application.app.name
-  bucket      = aws_s3_bucket.artifacts.id
-  key         = aws_s3_object.bundle.key
+resource "aws_ecs_cluster_capacity_providers" "main" {
+  cluster_name       = aws_ecs_cluster.main.name
+  capacity_providers = ["FARGATE"]
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE"
+    weight            = 1
+  }
 }
 
 # ==========================================================================
-# Elastic Beanstalk environment (single instance)
+# ECS Task Definition
 # ==========================================================================
-resource "aws_elastic_beanstalk_environment" "env" {
-  name                = "${local.app_name}-env"
-  application         = aws_elastic_beanstalk_application.app.name
-  solution_stack_name = var.solution_stack
-  version_label       = aws_elastic_beanstalk_application_version.v.name
+resource "aws_ecs_task_definition" "app" {
+  family                   = local.app_name
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 512
+  memory                   = 1024
+  execution_role_arn       = aws_iam_role.execution.arn
+  task_role_arn            = aws_iam_role.task.arn
 
-  setting {
-    namespace = "aws:elasticbeanstalk:environment"
-    name      = "EnvironmentType"
-    value     = "SingleInstance"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:environment"
-    name      = "ServiceRole"
-    value     = aws_iam_role.eb_service.arn
-  }
-  setting {
-    namespace = "aws:autoscaling:launchconfiguration"
-    name      = "IamInstanceProfile"
-    value     = aws_iam_instance_profile.instance.name
-  }
-  setting {
-    namespace = "aws:autoscaling:launchconfiguration"
-    name      = "InstanceType"
-    value     = var.instance_type
-  }
-  setting {
-    namespace = "aws:autoscaling:launchconfiguration"
-    name      = "SecurityGroups"
-    value     = aws_security_group.eb.id
-  }
-  setting {
-    namespace = "aws:ec2:vpc"
-    name      = "VPCId"
-    value     = var.vpc_id
-  }
-  setting {
-    namespace = "aws:ec2:vpc"
-    name      = "Subnets"
-    value     = join(",", var.subnet_ids)
-  }
-  setting {
-    namespace = "aws:ec2:vpc"
-    name      = "AssociatePublicIpAddress"
-    value     = "true"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:healthreporting:system"
-    name      = "SystemType"
-    value     = "enhanced"
+  container_definitions = jsonencode([{
+    name      = local.app_name
+    image     = "${aws_ecr_repository.app.repository_url}:latest"
+    essential = true
+
+    portMappings = [{
+      containerPort = 8080
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      { name = "SPRING_PROFILES_ACTIVE",       value = "prod" },
+      { name = "SPRING_JPA_HIBERNATE_DDLAUTO", value = "update" },
+      { name = "SERVER_PORT",                  value = "8080" },
+      { name = "AWS_REGION",                   value = var.aws_region },
+      { name = "REMINDLY_S3_BUCKET",           value = var.scans_bucket },
+      { name = "GOWIZE_CORS_ALLOWED_ORIGINS",  value = var.cors_origins },
+      { name = "SPRING_DATASOURCE_URL",
+        value = "jdbc:postgresql://${aws_db_instance.main.address}:5432/${var.db_name}" },
+      { name = "SPRING_DATASOURCE_USERNAME", value = var.db_username },
+      { name = "SPRING_DATASOURCE_PASSWORD", value = random_password.db.result },
+      { name = "JWT_SECRET",                 value = var.jwt_secret },
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.app.name
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 60
+    }
+  }])
+}
+
+# ==========================================================================
+# ECS Service
+# ==========================================================================
+resource "aws_ecs_service" "app" {
+  name            = local.app_name
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = true
   }
 
-  # ---- Application environment variables ----
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "SPRING_PROFILES_ACTIVE"
-    value     = "prod"
-  }
-  # Auto-create the schema on first boot (prod profile defaults to "validate").
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "SPRING_JPA_HIBERNATE_DDLAUTO"
-    value     = "update"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "SERVER_PORT"
-    value     = "5000"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "SPRING_DATASOURCE_URL"
-    value     = "jdbc:postgresql://${aws_db_instance.main.address}:5432/${var.db_name}"
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "SPRING_DATASOURCE_USERNAME"
-    value     = var.db_username
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "SPRING_DATASOURCE_PASSWORD"
-    value     = random_password.db.result
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "AWS_REGION"
-    value     = var.aws_region
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "REMINDLY_S3_BUCKET"
-    value     = var.scans_bucket
-  }
-  # Both spellings so @Value relaxed-binding resolves regardless of dash handling.
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "GOWIZE_CORS_ALLOWEDORIGINS"
-    value     = var.cors_origins
-  }
-  setting {
-    namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "GOWIZE_CORS_ALLOWED_ORIGINS"
-    value     = var.cors_origins
+  lifecycle {
+    ignore_changes = [task_definition]
   }
 }

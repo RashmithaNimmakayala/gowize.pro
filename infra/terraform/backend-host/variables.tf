@@ -17,26 +17,10 @@ variable "subnet_ids" {
   ]
 }
 
-variable "solution_stack" {
-  type    = string
-  default = "64bit Amazon Linux 2023 v4.12.1 running Corretto 21"
-}
-
-variable "instance_type" {
-  type    = string
-  default = "t3.micro"
-}
-
 variable "scans_bucket" {
   description = "Existing S3 bucket the app uses for scan uploads."
   type        = string
   default     = "remindly-scans-470999030508"
-}
-
-variable "artifacts_bucket" {
-  description = "Globally-unique bucket for EB app version bundles."
-  type        = string
-  default     = "gowize-eb-artifacts-470999030508"
 }
 
 variable "db_name" {
@@ -49,14 +33,14 @@ variable "db_username" {
   default = "gowize"
 }
 
-variable "cors_origins" {
-  description = "Allowed browser origins for the API (frontend URLs)."
+variable "jwt_secret" {
+  description = "Secret key for signing JWTs — must be at least 32 characters."
   type        = string
-  default     = "https://d9mna2jm5ltjk.cloudfront.net,https://gowize.pro,https://www.gowize.pro"
+  sensitive   = true
 }
 
-variable "bundle_path" {
-  description = "Local path to the EB application bundle (zip with application.jar)."
+variable "cors_origins" {
+  description = "Allowed browser origins for the API."
   type        = string
-  default     = "../../../backend/build/eb/eb-bundle.zip"
+  default     = "https://gowize.pro,https://www.gowize.pro"
 }
