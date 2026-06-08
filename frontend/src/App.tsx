@@ -6,6 +6,7 @@ import { ItemDetailPage } from './pages/ItemDetail'
 import { SettingsPage } from './pages/Settings'
 import { LoginPage } from './pages/Login'
 import { SignupPage } from './pages/Signup'
+import { VerifyOtpPage } from './pages/VerifyOtp'
 import { ForgotPasswordPage } from './pages/ForgotPassword'
 import { BottomNav } from './components/BottomNav'
 import { Sidebar } from './components/Sidebar'
@@ -39,6 +40,7 @@ function App() {
               {/* Standalone, full-screen (no app chrome) */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/verify-otp" element={<VerifyOtpPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
               {/* Everything else inside the app shell — requires auth */}

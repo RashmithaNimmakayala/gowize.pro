@@ -60,12 +60,32 @@ export const api = {
     state?: string
     country?: string
     zipcode?: string
-  }): Promise<AuthPayload> {
-    return unwrap<AuthPayload>(
+  }): Promise<void> {
+    await unwrap<void>(
       await fetch(`${BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+      }),
+    )
+  },
+
+  async verifyOtp(email: string, code: string): Promise<AuthPayload> {
+    return unwrap<AuthPayload>(
+      await fetch(`${BASE}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      }),
+    )
+  },
+
+  async resendOtp(email: string): Promise<void> {
+    await unwrap<void>(
+      await fetch(`${BASE}/api/auth/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       }),
     )
   },

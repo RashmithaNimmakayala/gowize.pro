@@ -17,7 +17,6 @@ import {
 import { PasswordInput } from '../components/PasswordInput'
 import { Combobox } from '../components/Combobox'
 import { useToast } from '../components/Toast'
-import { useAuth } from '../lib/authContext'
 import { api } from '../lib/api'
 import { fetchCountries, fetchStates } from '../lib/locations'
 import { COUNTRY_CODES } from '../lib/countryCodes'
@@ -26,7 +25,7 @@ import { cn } from '@/lib/utils'
 export function SignupPage() {
   const navigate = useNavigate()
   const toast = useToast()
-  const { login } = useAuth()
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -80,7 +79,7 @@ export function SignupPage() {
     setSubmitting(true)
     setServerError('')
     try {
-      const payload = await api.register({
+      await api.register({
         name,
         email,
         password,
@@ -91,8 +90,7 @@ export function SignupPage() {
         country: country || undefined,
         zipcode: zipcode || undefined,
       })
-      login(payload)
-      navigate('/')
+      navigate('/verify-otp', { state: { email } })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Registration failed'
       setServerError(msg)

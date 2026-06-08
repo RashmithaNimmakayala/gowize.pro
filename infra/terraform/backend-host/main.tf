@@ -221,6 +221,11 @@ resource "aws_ecs_task_definition" "app" {
       { name = "SPRING_DATASOURCE_USERNAME", value = var.db_username },
       { name = "SPRING_DATASOURCE_PASSWORD", value = random_password.db.result },
       { name = "JWT_SECRET",                 value = var.jwt_secret },
+      { name = "MAIL_HOST",                  value = var.mail_host },
+      { name = "MAIL_PORT",                  value = tostring(var.mail_port) },
+      { name = "MAIL_USERNAME",              value = var.mail_username },
+      { name = "MAIL_PASSWORD",              value = var.mail_password },
+      { name = "MAIL_FROM",                  value = var.mail_from },
     ]
 
     logConfiguration = {
