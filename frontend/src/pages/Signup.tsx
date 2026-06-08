@@ -31,7 +31,7 @@ export function SignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [countryCode, setCountryCode] = useState('+91')
+  const [dialLabel, setDialLabel] = useState('🇮🇳 +91 India')
   const [mobile, setMobile] = useState('')
   const [addressLine1, setAddressLine1] = useState('')
   const [addressLine2, setAddressLine2] = useState('')
@@ -75,7 +75,7 @@ export function SignupPage() {
         name,
         email,
         password,
-        phone: countryCode && mobile ? `${countryCode}${mobile}` : undefined,
+        phone: mobile ? `${COUNTRY_CODES.find((c) => `${c.flag} ${c.dial} ${c.name}` === dialLabel)?.dial ?? ''}${mobile}` : undefined,
         addressLine1: addressLine1 || undefined,
         addressLine2: addressLine2 || undefined,
         state: stateName || undefined,
@@ -211,14 +211,9 @@ export function SignupPage() {
                   <Combobox
                     id="dial-code"
                     options={COUNTRY_CODES.map((c) => `${c.flag} ${c.dial} ${c.name}`)}
-                    value={COUNTRY_CODES.find((c) => c.dial === countryCode)
-                      ? `${COUNTRY_CODES.find((c) => c.dial === countryCode)!.flag} ${countryCode} ${COUNTRY_CODES.find((c) => c.dial === countryCode)!.name}`
-                      : ''}
-                    onChange={(val) => {
-                      const match = COUNTRY_CODES.find((c) => val.includes(c.dial) && val.includes(c.name))
-                      if (match) setCountryCode(match.dial)
-                    }}
-                    placeholder="Code"
+                    value={dialLabel}
+                    onChange={setDialLabel}
+                    placeholder="Select country"
                     searchPlaceholder="Search country…"
                     className="w-52 shrink-0"
                   />
