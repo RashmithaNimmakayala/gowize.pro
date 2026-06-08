@@ -27,6 +27,20 @@ const DEFAULT_LEAD: Record<Category, number> = {
 
 const CATEGORIES: Category[] = ['grocery', 'medicine', 'cosmetic']
 
+const PACKAGE_UNITS = ['ml', 'l', 'g', 'kg', 'oz', 'lb', 'pcs'] as const
+type PackageUnit = (typeof PACKAGE_UNITS)[number]
+
+function parsePackageSize(raw: string): { value: string; unit: PackageUnit } {
+  const match = raw.trim().match(/^([\d.]+)\s*([a-zA-Z]+)$/)
+  if (match) {
+    const unit = match[2].toLowerCase()
+    if ((PACKAGE_UNITS as readonly string[]).includes(unit)) {
+      return { value: match[1], unit: unit as PackageUnit }
+    }
+  }
+  return { value: '', unit: 'ml' }
+}
+
 function AutoBadge({ source }: { source?: FieldSource }) {
   if (!source || source === 'manual') return null
   const label = source === 'barcode' ? 'Barcode' : source === 'ocr' ? 'OCR' : 'Auto'
@@ -64,7 +78,9 @@ export function ConfirmCardPage() {
   const [expiryDate, setExpiryDate] = useState(scan?.expiryDate ?? '')
   const [openedOn, setOpenedOn] = useState('')
   const [paoMonths, setPaoMonths] = useState(12)
-  const [packageSize, setPackageSize] = useState(scan?.packageSize ?? '')
+  const initialPackageSize = useMemo(() => parsePackageSize(scan?.packageSize ?? ''), [scan])
+  const [packageSizeValue, setPackageSizeValue] = useState(initialPackageSize.value)
+  const [packageSizeUnit, setPackageSizeUnit] = useState<PackageUnit>(initialPackageSize.unit)
   const [countOwned, setCountOwned] = useState(1)
   const [reminderLeadDays, setReminderLeadDays] = useState(DEFAULT_LEAD[initialCategory])
 
@@ -89,7 +105,7 @@ export function ConfirmCardPage() {
         expiryDate,
         openedOn: dateType === 'pao' ? openedOn : undefined,
         paoMonths: dateType === 'pao' ? paoMonths : undefined,
-        packageSize: packageSize.trim() || undefined,
+        packageSize: packageSizeValue.trim() ? `${packageSizeValue.trim()}${packageSizeUnit}` : undefined,
         countOwned,
         reminderLeadDays,
         sources,
@@ -251,12 +267,30 @@ export function ConfirmCardPage() {
               </Label>
               <AutoBadge source={sources.packageSize} />
             </div>
-            <Input
-              id="size"
-              placeholder="e.g. 500ml, 200g"
-              value={packageSize}
-              onChange={(e) => setPackageSize(e.target.value)}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="size"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                placeholder="e.g. 500"
+                value={packageSizeValue}
+                onChange={(e) => setPackageSizeValue(e.target.value)}
+                className="flex-1"
+              />
+              <Select value={packageSizeUnit} onValueChange={(v) => setPackageSizeUnit(v as PackageUnit)}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PACKAGE_UNITS.map((unit) => (
+                    <SelectItem key={unit} value={unit}>
+                      {unit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">
