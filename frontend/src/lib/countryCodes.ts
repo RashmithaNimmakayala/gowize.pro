@@ -1,7 +1,7 @@
 export interface CountryCode {
   flag: string
-  dial: string
   name: string
+  dial: string
 }
 
 export const COUNTRY_CODES: CountryCode[] = [

@@ -31,7 +31,7 @@ export function SignupPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [dialLabel, setDialLabel] = useState('🇮🇳 +91 India')
+  const [dialLabel, setDialLabel] = useState('🇮🇳 India +91')
   const [mobile, setMobile] = useState('')
   const [addressLine1, setAddressLine1] = useState('')
   const [addressLine2, setAddressLine2] = useState('')
@@ -75,7 +75,7 @@ export function SignupPage() {
         name,
         email,
         password,
-        phone: mobile ? `${COUNTRY_CODES.find((c) => `${c.flag} ${c.dial} ${c.name}` === dialLabel)?.dial ?? ''}${mobile}` : undefined,
+        phone: mobile ? `${COUNTRY_CODES.find((c) => `${c.flag} ${c.name} ${c.dial}` === dialLabel)?.dial ?? ''}${mobile}` : undefined,
         addressLine1: addressLine1 || undefined,
         addressLine2: addressLine2 || undefined,
         state: stateName || undefined,
@@ -210,7 +210,7 @@ export function SignupPage() {
                 <div className="flex gap-2">
                   <Combobox
                     id="dial-code"
-                    options={COUNTRY_CODES.map((c) => `${c.flag} ${c.dial} ${c.name}`)}
+                    options={COUNTRY_CODES.map((c) => `${c.flag} ${c.name} ${c.dial}`)}
                     value={dialLabel}
                     onChange={setDialLabel}
                     placeholder="Select country"
